@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+}, {
+    timestamps: true,
 });
 
 const Userdb = mongoose.model('userdb', userSchema);

@@ -1,17 +1,17 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const bodyParser = require('body-parser');
+const morgan = require('morgan');
 
 // Import routes
-const rootRouter = require('./src/routes/root');
-const usersRouter = require('./src/routes/router');
+const rootRouter = require('./src/routes/root.routes');
+const usersRouter = require('./src/routes/user.routes');
 
 const connectDB = require('./src/database/connection');
 
 const app = express();
 
-// Parse request to body-parser
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(morgan('tiny'));
+app.use(express.json());
 
 dotenv.config({ path: './config.env' });
 const PORT = process.env.PORT || 8080;
