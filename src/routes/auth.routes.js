@@ -3,9 +3,8 @@ const express = require('express');
 const { signup, signin } = require('../controller/auth.controller');
 
 // Middlewares
-const bodyCheck = require('../middlewares/bodyCheck');
-const validSignup = require('../middlewares/validSignup');
-const validSignin = require('../middlewares/validSignin');
+const { bodyCheck } = require('../middlewares/api');
+const { validSignup, validSignin } = require('../middlewares/auth');
 
 const router = express.Router();
 
