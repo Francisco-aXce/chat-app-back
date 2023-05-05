@@ -4,7 +4,7 @@ const morgan = require('morgan');
 
 // Import routes
 const rootRouter = require('./src/routes/root.routes');
-const usersRouter = require('./src/routes/user.routes');
+const authRouter = require('./src/routes/auth.routes');
 
 const connectDB = require('./src/database/connection');
 
@@ -21,7 +21,7 @@ connectDB();
 
 // Use routes
 app.use('/api/v1', rootRouter);
-app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/auth', authRouter);
 
 app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}!`);

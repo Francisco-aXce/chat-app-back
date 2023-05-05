@@ -1,5 +1,9 @@
 const pkg = require('../../package.json');
 
+/**
+ * Show API info
+ * 
+ */
 const info = (req, res, next) => {
     res.apiInfo = {
         name: pkg.name,
@@ -10,6 +14,4 @@ const info = (req, res, next) => {
     next();
 };
 
-module.exports = {
-    info,
-};
+module.exports = info;
