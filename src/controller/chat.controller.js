@@ -82,7 +82,51 @@ const sendMessage = async (req, res) => {
     }
 };
 
+const editMessage = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId, messageId, message } = req.body;
+
+        // Find chat
+        const chatFound = await Chat.findById(chatId);
+
+        // Check if the user is in the chat
+        if(!chatFound.users.includes(user.id)) {
+            return res.status(403).json({ message: 'You are not in the chat' });
+        }
+
+        // Check if a message is provided
+        if(!message) {
+            return res.status(403).json({ message: 'No message provided' });
+        }
+
+        // Check if the message exists
+        const messageFound = await Message.findById(messageId);
+
+        if(!messageFound) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+
+        // Check if the message belongs to the chat
+        if(messageFound.chat.toString() !== chatId) {
+            return res.status(403).json({ message: 'Message does not belong to the chat' });
+        }
+
+        // Edit message
+        messageFound.message = message;
+        await messageFound.save();
+
+        res.json({ message: 'Message edited!' });
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
 module.exports = {
     createChat,
     sendMessage,
+    editMessage,
 };
