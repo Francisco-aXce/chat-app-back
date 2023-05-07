@@ -74,6 +74,54 @@ const editChat = async (req, res) => {
 };
 
 /**
+ * Add a user to a chat.
+ * Body must contain:
+ * - chatId: String
+ * - userId: String
+ * 
+ * Body response:
+ * - message: String
+ * 
+ */
+const addUserToChat = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId, userId } = req.body;
+
+        // Check if the user is not the same
+        if(user.id === userId) {
+            return res.status(403).json({ message: 'You cannot add yourself' });
+        }
+
+        // Find chat
+        const chatFound = await Chat.findById(chatId);
+
+        // Check if the calling user is member of the chat
+        if(!chatFound.users.includes(user.id)) {
+            return res.status(403).json({ message: 'You need to be member of the chat' });
+        }
+
+        // Check if the user to add is already member of the chat
+        if(chatFound.users.includes(userId)) {
+            // I'm a teapot :D
+            return res.status(418).json({ message: 'User is already member of the chat' });
+        }
+
+        // Add user to chat
+        chatFound.users.push(userId);
+        await chatFound.save();
+
+        res.json({ message: 'User added successfully!' });
+
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+/**
  * Send a message to a chat.
  * Body must contain:
  * - chatId: String
@@ -176,6 +224,7 @@ const editMessage = async (req, res) => {
 module.exports = {
     createChat,
     editChat,
+    addUserToChat,
     sendMessage,
     editMessage,
 };
