@@ -5,14 +5,16 @@ const messageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
+    chat: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Chat',
+    },
     message: {
         type: String,
         required: true,
     },
-    date: {
-        type: Date,
-        default: Date.now,
-    },
+}, {
+    timestamps: true,
 });
 
 const Message = mongoose.model('Message', messageSchema);
@@ -26,7 +28,12 @@ const chatSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
-    messages: [messageSchema],
+    messages: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+    }],
+}, {
+    timestamps: true,
 });
 
 const Chat = mongoose.model('Chat', chatSchema);

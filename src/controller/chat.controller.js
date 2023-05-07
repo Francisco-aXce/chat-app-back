@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { Chat } = require('../models/Chat');
+const { Chat, Message } = require('../models/Chat');
 const { getChatGroupName } = require('../services/chat.service');
 
 /**
@@ -32,8 +32,57 @@ const createChat = async (req, res) => {
         if(error.kind === 'ObjectId') {
             return res.status(404).json({ message: 'Not all users exists' });
         }
-        res.status(500).json({ message: error.message || 'Something went wrong!' });
+        res.status(500).json({ message: error.message || 'Something went wrong' });
     }
 };
 
-module.exports = { createChat };
+/**
+ * Send a message to a chat.
+ * Body must contain:
+ * - chatId: String
+ * - message: String (Chat message)
+ * 
+ * Body response:
+ * - message: String (Response message)
+ * 
+ */
+const sendMessage = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId, message } = req.body;
+
+        // Find chat
+        const chatFound = await Chat.findById(chatId);
+
+        // Check if the user is in the chat
+        if(!chatFound.users.includes(user.id)) {
+            return res.status(403).json({ message: 'You are not in the chat' });
+        }
+
+        // Check if a message is provided
+        if(!message) {
+            return res.status(403).json({ message: 'No message provided' });
+        }
+
+        // Add message
+        const newMessage = new Message({ user: user.id, message, chat: chatId });
+
+        Promise.all([
+            newMessage.save(),
+            chatFound.updateOne({ $push: { messages: newMessage._id } }),
+        ]);
+
+        res.json({ message: 'Message sent!' });
+
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+module.exports = {
+    createChat,
+    sendMessage,
+};
