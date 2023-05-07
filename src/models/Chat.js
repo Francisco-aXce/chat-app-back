@@ -14,6 +14,7 @@ const messageSchema = new mongoose.Schema({
         type: String,
         enum: [
             'Chat', // 1:1
+            'ChatGroup', // 1:n
         ],
         required: true,
     },
@@ -45,4 +46,35 @@ const chatSchema = new mongoose.Schema({
 
 const Chat = mongoose.model('Chat', chatSchema);
 
-module.exports = { Chat, Message };
+const chatGroupSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        maxLength: 30,
+        required: true,
+    },
+    description: {
+        type: String,
+        maxLength: 300,
+    },
+    users: {
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }],
+        required: true,
+    },
+    messages: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+    }],
+}, {
+    timestamps: true,
+});
+
+const ChatGroup = mongoose.model('ChatGroup', chatGroupSchema);
+
+module.exports = {
+    Chat,
+    Message,
+    ChatGroup,
+};

@@ -1,6 +1,8 @@
 const User = require('../models/User');
-const { Chat, Message } = require('../models/Chat');
+const { Chat, Message, ChatGroup } = require('../models/Chat');
+const { arrayUniqueItems } = require('../services/utils.service');
 
+// #region 1:1 chat
 
 /**
  * Get a chat by userId.
@@ -188,8 +190,66 @@ const removeMessage = async (req, res) => {
     }
 };
 
+// #endregion
+
+// #region 1:N chat
+
+/**
+ * Creates a chat group.
+ * Body must contain:
+ * - name: String
+ * - description: String
+ * - users: Array of strings (User ids, must contains the calling user if want to add it to the group)
+ * 
+ * Body response:
+ * - message: String (Response message)
+ * - chatId: String (Chat id)
+ * 
+ */
+const createChatGroup = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { name, users, description } = req.body;
+
+        // Check if necessary fields are provided
+        if(!name || !users) {
+            return res.status(400).json({ message: 'Missing data' });
+        }
+
+        const uniqueUsers = arrayUniqueItems(users);
+
+        // Check if all users exist, select only name and surname
+        const usersFound = await User.find({ _id: { $in: uniqueUsers } }).select('name surname')
+        .catch((err) => {
+            if(err.kind === 'ObjectId') return undefined;
+            throw err;
+        });
+        if(!usersFound) {
+            return res.status(404).json({ message: 'Not all users are valid' });
+        }
+
+        // Create the chat
+        const newChat = new ChatGroup({
+            name,
+            description,
+            users: uniqueUsers,
+        });
+
+        // Save the chat
+        await newChat.save();
+
+        return res.json({ message: 'Chat group created', chatId: newChat._id });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+// #endregion
+
 module.exports = {
     getChat,
     sendMessage,
     removeMessage,
+    createChatGroup,
 };
