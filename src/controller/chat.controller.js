@@ -82,6 +82,17 @@ const sendMessage = async (req, res) => {
     }
 };
 
+/**
+ * Edit a message.
+ * Body must contain:
+ * - chatId: String
+ * - messageId: String
+ * - message: String (Chat message)
+ * 
+ * Body response:
+ * - message: String (Response message)
+ * 
+ */
 const editMessage = async (req, res) => {
     try {
         const user = res.locals.user;
