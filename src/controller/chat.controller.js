@@ -3,6 +3,66 @@ const { Chat, Message } = require('../models/Chat');
 const { getChatGroupName } = require('../services/chat.service');
 
 /**
+ * Get all chats where the user is included.
+ * 
+ * Returns:
+ * - chats: Array
+ * 
+ */
+const getUserChats = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        
+        // Find chats where the user is included, and return only name and users
+        const chats = await Chat.find({ users: { $in: [user.id] } }).select('name users');
+
+        res.json({ chats });
+        
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+/**
+ * Get a chat by id. Only if the user is included in the chat.
+ * 
+ * Params:
+ * - chatId: String
+ * 
+ * Returns:
+ * - chat: Object
+ * 
+ */
+const getChat = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId } = req.params;
+
+        // Find chat
+        let chat = await Chat.findById(chatId);
+
+        // Check if the user is included in the chat
+        if(!chat.users.includes(user.id)) {
+            return res.status(403).json({ message: 'You are not allowed to see this chat' });
+        }
+
+        // Populate users and messages
+        chat = await chat.populate([
+            { path: 'users', select: 'name surname' },
+            { path: 'messages' },
+        ]);
+
+        res.json({ chat });
+
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+/**
  * Create a chat.
  * Body must contain:
  * - name: String (optional)
@@ -265,6 +325,8 @@ const editMessage = async (req, res) => {
 };
 
 module.exports = {
+    getUserChats,
+    getChat,
     createChat,
     editChat,
     addUserToChat,

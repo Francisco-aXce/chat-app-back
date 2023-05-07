@@ -1,12 +1,17 @@
 const express = require('express');
 
 const { tokenValidate } = require('../middlewares/auth');
-const { createChat, sendMessage, editMessage, editChat, addUserToChat, removeUserFromChat } = require('../controller/chat.controller');
+const {
+    createChat, editChat, getChat, getUserChats, addUserToChat, removeUserFromChat,
+    sendMessage, editMessage,
+} = require('../controller/chat.controller');
 
 const router = express.Router();
 
 router.use(tokenValidate);
 
+router.get('/', getUserChats);
+router.get('/:chatId', getChat);
 router.post('/create', createChat);
 router.put('/edit', editChat);
 router.post('/members/add', addUserToChat);
