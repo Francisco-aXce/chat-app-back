@@ -48,8 +48,8 @@ const tokenValidate = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.SECRET);
-        res.locals.user = decoded;
         const userFound = await User.findById(decoded.id).select('-password');
+        res.locals.user = { ...userFound._doc, ...decoded };
 
         if(!userFound) {
             return res.status(404).json({ message: 'No do not exists' });
