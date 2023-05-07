@@ -12,7 +12,9 @@ const messageSchema = new mongoose.Schema({
     },
     chatType: {
         type: String,
-        enum: ['Chat'],
+        enum: [
+            'Chat', // 1:1
+        ],
         required: true,
     },
     chat: {
@@ -26,14 +28,11 @@ const messageSchema = new mongoose.Schema({
 const Message = mongoose.model('Message', messageSchema);
 
 const chatSchema = new mongoose.Schema({
-    from: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    to: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+    users: {
+        type: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }],
         required: true,
     },
     messages: [{

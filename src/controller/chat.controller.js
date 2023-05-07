@@ -256,11 +256,10 @@ const sendMessage = async (req, res) => {
         });
 
         // Find chat, if it doesn't exist, create it
-        let chatFound = await Chat.findOne({ from: user.id, to });
+        let chatFound = await Chat.findOne({ users: { $all: [user.id, to], $size: 2 } });
         if(!chatFound) {
             chatFound = new Chat({
-                from: user.id,
-                to,
+                users: [user.id, to],
             });
             await chatFound.save();
         }
