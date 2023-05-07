@@ -122,6 +122,49 @@ const addUserToChat = async (req, res) => {
 };
 
 /**
+ * Remove a user from a chat.
+ * Body must contain:
+ * - chatId: String
+ * - userId: String
+ * 
+ * Body response:
+ * - message: String
+ * 
+ */
+const removeUserFromChat = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId, userId } = req.body;
+
+        // In case the user is not specified, remove the calling user
+        const userToRemove = userId || user.id;
+        const isSelf = user.id === userToRemove;
+
+        // Find chat
+        const chatFound = await Chat.findById(chatId);
+
+        // Make shure the user to remove is member of the chat
+        if(isSelf && !chatFound.users.includes(userToRemove)) {
+            return res.status(403).json({ message: 'You are not in the chat' });
+        }
+        else if(!chatFound.users.includes(user.id) || !chatFound.users.includes(userToRemove)) {
+            return res.status(403).json({ message: 'Problem occurred while removing the user' });
+        }
+
+        // Remove user from chat
+        await Chat.updateOne({ _id: chatFound._id }, { $pull: { users: userToRemove } });
+
+        res.json({ message: 'User removed' });
+        
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+/**
  * Send a message to a chat.
  * Body must contain:
  * - chatId: String
@@ -225,6 +268,7 @@ module.exports = {
     createChat,
     editChat,
     addUserToChat,
+    removeUserFromChat,
     sendMessage,
     editMessage,
 };
