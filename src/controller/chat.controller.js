@@ -24,10 +24,10 @@ const getUserChats = async (req, res) => {
 };
 
 /**
- * Get a chat by id. Only if the user is included in the chat.
+ * Get a chat by userId.
  * 
  * Params:
- * - chatId: String
+ * - userId: String (user id who chat is for)
  * 
  * Returns:
  * - chat: Object
@@ -36,14 +36,36 @@ const getUserChats = async (req, res) => {
 const getChat = async (req, res) => {
     try {
         const user = res.locals.user;
-        const { chatId } = req.params;
+        const { userId } = req.params;
+
+        // Check if all params are provided
+        if(!userId) {
+            return res.status(400).json({ message: 'Missing data' });
+        }
+
+        // Check if is the same user
+        const isSameUser = user.id === userId;
+
+        // Check if the user exists
+        const userFound = await User.findById(userId).select('name surname')
+        .catch(err => {
+            if(err.kind === 'ObjectId') return undefined;
+            throw err;
+        });
+        if(!userFound) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
         // Find chat
-        let chat = await Chat.findById(chatId);
+        let chat = isSameUser ? await Chat.findOne({ users: { $all: [user.id], $size: 1 } }) 
+        : await Chat.findOne({ users: { $all: [user.id, userId], $size: 2 } })
+        .catch(err => {
+            if(err.kind === 'ObjectId') return undefined;
+            throw err;
+        });
 
-        // Check if the user is included in the chat
-        if(!chat.users.includes(user.id)) {
-            return res.status(403).json({ message: 'You are not allowed to see this chat' });
+        if(!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
         }
 
         // Populate users and messages
@@ -55,9 +77,6 @@ const getChat = async (req, res) => {
         res.json({ chat });
 
     } catch (error) {
-        if(error.kind === 'ObjectId') {
-            return res.status(404).json({ message: 'Chat not found' });
-        }
         res.status(500).json({ message: error.message || 'Something went wrong' });
     }
 };

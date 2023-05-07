@@ -10,10 +10,10 @@ const router = express.Router();
 
 router.use(tokenValidate);
 
+router.get('/:userId', getChat);
 router.post('/message/send', sendMessage);
 
 // router.get('/', getUserChats);
-// router.get('/:chatId', getChat);
 // router.post('/create', createChat);
 // router.put('/edit', editChat);
 // router.post('/members/add', addUserToChat);
