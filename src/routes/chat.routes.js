@@ -1,13 +1,14 @@
 const express = require('express');
 
 const { tokenValidate } = require('../middlewares/auth');
-const { createChat, sendMessage, editMessage } = require('../controller/chat.controller');
+const { createChat, sendMessage, editMessage, editChat } = require('../controller/chat.controller');
 
 const router = express.Router();
 
 router.use(tokenValidate);
 
 router.post('/create', createChat);
+router.post('/edit', editChat);
 router.post('/message', sendMessage);
 router.post('/message/edit', editMessage);
 

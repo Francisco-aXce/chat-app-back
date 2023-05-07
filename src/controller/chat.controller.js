@@ -37,6 +37,43 @@ const createChat = async (req, res) => {
 };
 
 /**
+ * Edit a chat information. (not including users)
+ * Body must contain:
+ * - chatId: String
+ * - name: String
+ * 
+ * Body response:
+ * - message: String
+ * 
+ */
+const editChat = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { chatId, name } = req.body;
+
+        // Find chat
+        const chatFound = await Chat.findById(chatId);
+
+        // Check if the user is member of the chat
+        if(!chatFound.users.includes(user.id)) {
+            return res.status(403).json({ message: 'You are not in the chat' });
+        }
+
+        // Edit chat
+        chatFound.name = name;
+        await chatFound.save();
+
+        res.json({ message: 'Chat edited successfully!' });
+
+    } catch (error) {
+        if(error.kind === 'ObjectId') {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
+/**
  * Send a message to a chat.
  * Body must contain:
  * - chatId: String
@@ -138,6 +175,7 @@ const editMessage = async (req, res) => {
 
 module.exports = {
     createChat,
+    editChat,
     sendMessage,
     editMessage,
 };
