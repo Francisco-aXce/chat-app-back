@@ -225,9 +225,9 @@ const removeUserFromChat = async (req, res) => {
 };
 
 /**
- * Send a message to a chat.
+ * Send a message to someone.
  * Body must contain:
- * - chatId: String
+ * - to: String (User id)
  * - message: String (Chat message)
  * 
  * Body response:
@@ -237,25 +237,44 @@ const removeUserFromChat = async (req, res) => {
 const sendMessage = async (req, res) => {
     try {
         const user = res.locals.user;
-        const { chatId, message } = req.body;
+        const { to, message } = req.body;
 
-        // Find chat
-        const chatFound = await Chat.findById(chatId);
-
-        // Check if the user is in the chat
-        if(!chatFound.users.includes(user.id)) {
-            return res.status(403).json({ message: 'You are not in the chat' });
+        // Check if necessary fields are provided
+        if(!to || !message) {
+            return res.status(400).json({ message: 'Missing data' });
         }
 
-        // Check if a message is provided
-        if(!message) {
-            return res.status(403).json({ message: 'No message provided' });
+        // Check if the "to" user exists
+        await User.findById(to)
+        .catch((err) => {
+            // If the user doesn't exist, return a 404 status code
+            if(err.kind === 'ObjectId') {
+                return res.status(404).json({ message: 'User not found' });
+            }
+            // If the error is different, throw it
+            throw err;
+        });
+
+        // Find chat, if it doesn't exist, create it
+        let chatFound = await Chat.findOne({ from: user.id, to });
+        if(!chatFound) {
+            chatFound = new Chat({
+                from: user.id,
+                to,
+            });
+            await chatFound.save();
         }
 
-        // Add message
-        const newMessage = new Message({ user: user.id, message, chat: chatId });
+        // Create the message
+        const newMessage = new Message({
+            author: user.id,
+            message,
+            chatType: 'Chat', // Is a private chat
+            chat: chatFound._id,
+        });
 
-        Promise.all([
+        // Save the message and update the chat
+        await Promise.all([
             newMessage.save(),
             chatFound.updateOne({ $push: { messages: newMessage._id } }),
         ]);
@@ -263,9 +282,6 @@ const sendMessage = async (req, res) => {
         res.json({ message: 'Message sent!' });
 
     } catch (error) {
-        if(error.kind === 'ObjectId') {
-            return res.status(404).json({ message: 'Chat not found' });
-        }
         res.status(500).json({ message: error.message || 'Something went wrong' });
     }
 };
