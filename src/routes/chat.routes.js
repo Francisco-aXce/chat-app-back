@@ -9,7 +9,7 @@ router.use(tokenValidate);
 
 router.post('/create', createChat);
 router.post('/edit', editChat);
-router.post('/message', sendMessage);
-router.post('/message/edit', editMessage);
+router.post('/messages/send', sendMessage);
+router.post('/messages/edit', editMessage);
 
 module.exports = router;
