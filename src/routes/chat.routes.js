@@ -8,10 +8,10 @@ const router = express.Router();
 router.use(tokenValidate);
 
 router.post('/create', createChat);
-router.post('/edit', editChat);
+router.put('/edit', editChat);
 router.post('/members/add', addUserToChat);
-router.post('/members/remove', removeUserFromChat);
+router.delete('/members/remove', removeUserFromChat);
 router.post('/messages/send', sendMessage);
-router.post('/messages/edit', editMessage);
+router.put('/messages/edit', editMessage);
 
 module.exports = router;
