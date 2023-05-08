@@ -3,7 +3,7 @@ const express = require('express');
 const { tokenValidate } = require('../middlewares/auth');
 const {
     getChat, sendMessage, removeMessage,
-    createChatGroup,
+    createChatGroup, getChatGroup,
 } = require('../controller/chat.controller');
 
 const router = express.Router();
@@ -16,6 +16,7 @@ router.post('/message/send', sendMessage);
 router.delete('/message/remove', removeMessage);
 
 // 1:n chat
+router.get('/group/:groupId', getChatGroup);
 router.post('/group/create', createChatGroup);
 
 module.exports = router;

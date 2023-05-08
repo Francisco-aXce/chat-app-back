@@ -208,7 +208,6 @@ const removeMessage = async (req, res) => {
  */
 const createChatGroup = async (req, res) => {
     try {
-        const user = res.locals.user;
         const { name, users, description } = req.body;
 
         // Check if necessary fields are provided
@@ -245,6 +244,40 @@ const createChatGroup = async (req, res) => {
     }
 };
 
+const getChatGroup = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { groupId } = req.params;
+
+        // Find the chat
+        let chatFound = await ChatGroup.findOne({ _id: groupId })
+        .catch((err) => {
+            if(err.kind === 'ObjectId') return undefined;
+            throw err;
+        });
+        if(!chatFound) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+
+        // Check if the user is a member of the chat
+        const isMember = chatFound.users.includes(user.id);
+        if(!isMember) {
+            return res.status(403).json({ message: 'Action not allowed' });
+        }
+
+        // Populate the users and messages
+        chatFound = await chatFound.populate([
+            { path: 'users', select: 'name surname' },
+            { path: 'messages', select: 'author message' },
+        ]);
+
+        res.status(200).json({ chat: chatFound });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
 // #endregion
 
 module.exports = {
@@ -252,4 +285,5 @@ module.exports = {
     sendMessage,
     removeMessage,
     createChatGroup,
+    getChatGroup,
 };
