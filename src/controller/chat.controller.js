@@ -244,6 +244,16 @@ const createChatGroup = async (req, res) => {
     }
 };
 
+/**
+ * Gets a chat group.
+ * Params must contain:
+ * - groupId: String
+ * 
+ * Body response:
+ * - message?: String (Response message)
+ * - chat?: ChatGroup (Chat group)
+ * 
+ */
 const getChatGroup = async (req, res) => {
     try {
         const user = res.locals.user;
@@ -278,6 +288,63 @@ const getChatGroup = async (req, res) => {
     }
 };
 
+/**
+ * Sends a message to a chat group.
+ * Body must contain:
+ * - groupId: String
+ * - message: String
+ * 
+ * Body response:
+ * - message: String (Response message)
+ * 
+ */
+const sendMessageGroup = async (req, res) => {
+    try {
+        const user = res.locals.user;
+        const { groupId, message } = req.body;
+
+        // Check if necessary fields are provided
+        if(!groupId || !message) {
+            return res.status(400).json({ message: 'Missing data' });
+        }
+
+        // Check if the chat exists
+        const chatFound = await ChatGroup.findById(groupId)
+        .catch((err) => {
+            if(err.kind === 'ObjectId') return undefined;
+            throw err;
+        });
+        if(!chatFound) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+
+        // Check if the user is a member of the chat
+        const isMember = chatFound.users.includes(user.id);
+        if(!isMember) {
+            return res.status(403).json({ message: 'Action not allowed' });
+        }
+
+        // Create the message
+        const newMessage = new Message({
+            author: user.id,
+            message,
+            chatType: 'ChatGroup',
+            chat: chatFound._id,
+        });
+
+        // Save message and add it to the chat
+        await Promise.all([
+            newMessage.save(),
+            chatFound.updateOne({ $push: { messages: newMessage._id } }),
+        ]);
+
+        res.json({ message: 'Message sent' });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message || 'Something went wrong' });
+    }
+};
+
 // #endregion
 
 module.exports = {
@@ -286,4 +353,5 @@ module.exports = {
     removeMessage,
     createChatGroup,
     getChatGroup,
+    sendMessageGroup,
 };
